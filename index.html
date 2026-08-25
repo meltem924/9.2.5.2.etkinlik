@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yaylak mı, Kışlak mı? — Etkileşimli Öğrenme Etkinliği</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <main id="app-canvas" role="main" aria-label="Yaylak ve Kışlak Öğrenme Etkinliği">
+
+        <!-- Üst Başlık ve İlerleme Çubuğu -->
+        <header class="app-header">
+            <div class="header-brand">
+                <span class="brand-icon">🏕️</span>
+                <div class="brand-text">
+                    <h1 class="brand-title">Yaylak mı, Kışlak mı?</h1>
+                    <span class="brand-subtitle">Konargöçer Yaşam ve Mevsimsel Göç</span>
+                </div>
+            </div>
+
+            <!-- İlerleme Adımları -->
+            <nav class="progress-nav" aria-label="Etkinlik İlerleme Aşamaları">
+                <div class="step-item active" data-step="1" id="nav-step-1">
+                    <span class="step-num">1</span>
+                    <span class="step-label">Harita</span>
+                </div>
+                <div class="step-divider"></div>
+                <div class="step-item" data-step="2" id="nav-step-2">
+                    <span class="step-num">2</span>
+                    <span class="step-label">Keşif</span>
+                </div>
+                <div class="step-divider"></div>
+                <div class="step-item" data-step="3" id="nav-step-3">
+                    <span class="step-num">3</span>
+                    <span class="step-label">Karşılaştırma</span>
+                </div>
+                <div class="step-divider"></div>
+                <div class="step-item" data-step="4" id="nav-step-4">
+                    <span class="step-num">4</span>
+                    <span class="step-label">Göç Kararı</span>
+                </div>
+                <div class="step-divider"></div>
+                <div class="step-item" data-step="5" id="nav-step-5">
+                    <span class="step-num">5</span>
+                    <span class="step-label">Sonuç</span>
+                </div>
+            </nav>
+
+            <!-- Sağ Araçlar -->
+            <div class="header-actions">
+                <button type="button" class="btn-tool" id="btn-sound-toggle" aria-label="Ses Efektlerini Aç/Kapat" title="Ses">
+                    <span class="tool-icon">🔊</span>
+                </button>
+                <button type="button" class="btn-tool" id="btn-fullscreen" aria-label="Tam Ekran Moduna Geç" title="Tam Ekran">
+                    <span class="tool-icon">⛶</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Ekran Alanı -->
+        <div class="screens-container">
+
+            <!-- 1. EKRAN: ANA HARİTA -->
+            <section id="screen-home" class="screen active" aria-labelledby="home-title">
+                <div class="screen-subbar">
+                    <p class="guide-text" id="home-title">
+                        <span class="info-badge">Bilgi</span>
+                        Haritayı inceleyiniz. <strong>Yaylak</strong> ve <strong>kışlak</strong> bölgelerini seçerek konargöçer yaşamı keşfediniz.
+                    </p>
+                    <div class="discovery-status" id="discovery-status-badge">
+                        <span class="status-dot"></span>
+                        <span id="discovery-status-text">Keşif: 0 / 2 Bölge</span>
+                    </div>
+                </div>
+
+                <div class="interactive-stage map-stage">
+                    <div class="visual-frame">
+                        <img src="image/harita.png" alt="Orta Asya bozkırları, yaylak ve kışlak haritası" class="stage-image" id="map-img">
+
+                        <!-- Harita Hotspot: YAYLAK -->
+                        <button type="button" class="map-hotspot hotspot-yaylak" id="btn-hotspot-yaylak" aria-label="Yaylak bölgesine gidiniz">
+                            <span class="pulse-ring"></span>
+                            <span class="hotspot-pin">☀️</span>
+                            <span class="hotspot-label">
+                                <span class="hotspot-name">Yaylak</span>
+                                <span class="hotspot-tag">Yazlık Otlak</span>
+                                <span class="visited-badge" id="badge-visited-yaylak" style="display:none;">✓ Keşfedildi</span>
+                            </span>
+                        </button>
+
+                        <!-- Harita Hotspot: KIŞLAK -->
+                        <button type="button" class="map-hotspot hotspot-kislak" id="btn-hotspot-kislak" aria-label="Kışlak bölgesine gidiniz">
+                            <span class="pulse-ring"></span>
+                            <span class="hotspot-pin">❄️</span>
+                            <span class="hotspot-label">
+                                <span class="hotspot-name">Kışlak</span>
+                                <span class="hotspot-tag">Kışlık Barınak</span>
+                                <span class="visited-badge" id="badge-visited-kislak" style="display:none;">✓ Keşfedildi</span>
+                            </span>
+                        </button>
+
+                        <!-- Göç Yolu İpuçlu Rota Çizgisi -->
+                        <div class="route-hint-path" aria-hidden="true">
+                            <span class="route-point start"></span>
+                            <span class="route-line-dashed"></span>
+                            <span class="route-point end"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="screen-footer">
+                    <div class="footer-hint" id="home-footer-hint">
+                        💡 <em>İki bölgeyi de inceledikten sonra karşılaştırma adımı etkinleşecektir.</em>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="btn-to-compare" disabled>
+                        <span>İki Bölgeyi Karşılaştırınız</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </footer>
+            </section>
+
+            <!-- 2. EKRAN: YAYLAK KEŞFİ -->
+            <section id="screen-yaylak" class="screen" aria-labelledby="yaylak-title">
+                <div class="screen-subbar">
+                    <button type="button" class="btn btn-back btn-back-home" aria-label="Haritaya Geri Dönünüz">
+                        <span class="arrow">←</span> Haritaya Dön
+                    </button>
+                    <p class="guide-text" id="yaylak-title">
+                        <span class="location-badge yaylak-tag">☀️ Yaylak</span>
+                        Yaz aylarında hayvanların otlatılması için kullanılan yüksek ve serin alanlardır. Görseldeki etkileşim noktalarına dokunarak detayları inceleyiniz.
+                    </p>
+                    <div class="info-counter-badge" id="yaylak-counter-badge">
+                        <span>Keşif: </span>
+                        <strong id="yaylak-counter-text">0 / 3</strong>
+                    </div>
+                </div>
+
+                <div class="interactive-stage visual-stage">
+                    <div class="visual-frame">
+                        <img src="image/yaylak.png" alt="Yaylak yaşamı, otlaklar, keçe çadırlar ve hayvan sürüleri" class="stage-image">
+
+                        <!-- Yaylak Hotspot 1: Otlak (Hayvancılık) -->
+                        <button type="button" class="info-hotspot hotspot-y1" data-id="y1" aria-label="Otlak ve Hayvancılık bilgisini açınız">
+                            <span class="pulse-ring"></span>
+                            <span class="icon-bubble">🌿</span>
+                            <span class="bubble-title">Otlak</span>
+                        </button>
+
+                        <!-- Yaylak Hotspot 2: Çadır (Barınma) -->
+                        <button type="button" class="info-hotspot hotspot-y2" data-id="y2" aria-label="Çadır ve Barınma bilgisini açınız">
+                            <span class="pulse-ring"></span>
+                            <span class="icon-bubble">⛺</span>
+                            <span class="bubble-title">Barınma</span>
+                        </button>
+
+                        <!-- Yaylak Hotspot 3: Hayvan sürüsü (Hayvanlar) -->
+                        <button type="button" class="info-hotspot hotspot-y3" data-id="y3" aria-label="Hayvan Sürüleri bilgisini açınız">
+                            <span class="pulse-ring"></span>
+                            <span class="icon-bubble">🐎</span>
+                            <span class="bubble-title">Hayvanlar</span>
+                        </button>
+
+                        <!-- Bilgi Kartı Popover (Yaylak) -->
+                        <div class="info-popover" id="popover-yaylak" role="dialog" aria-modal="true" aria-hidden="true">
+                            <div class="popover-header">
+                                <div class="popover-title-group">
+                                    <span class="popover-icon" id="popover-yaylak-icon">🌿</span>
+                                    <h3 class="popover-title" id="popover-yaylak-title">Hayvancılık</h3>
+                                </div>
+                                <button type="button" class="btn-popover-close" aria-label="Bilgi Kartını Kapatınız">✕</button>
+                            </div>
+                            <div class="popover-body">
+                                <p class="popover-text" id="popover-yaylak-text">
+                                    Geniş otlaklar hayvanların beslenmesi için elverişlidir. Hayvancılık, konargöçerlerin temel geçim kaynaklarından biridir.
+                                </p>
+                            </div>
+                            <div class="popover-footer">
+                                <span class="popover-note">✓ Bilgi kaydedildi</span>
+                                <button type="button" class="btn btn-sm btn-primary btn-popover-ok">Anladım</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="screen-footer">
+                    <button type="button" class="btn btn-secondary btn-back-home">
+                        <span class="arrow">←</span> Haritaya Dön
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btn-yaylak-to-kislak">
+                        <span>Kışlağı Keşfet</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </footer>
+            </section>
+
+            <!-- 3. EKRAN: KIŞLAK KEŞFİ -->
+            <section id="screen-kislak" class="screen" aria-labelledby="kislak-title">
+                <div class="screen-subbar">
+                    <button type="button" class="btn btn-back btn-back-home" aria-label="Haritaya Geri Dönünüz">
+                        <span class="arrow">←</span> Haritaya Dön
+                    </button>
+                    <p class="guide-text" id="kislak-title">
+                        <span class="location-badge kislak-tag">❄️ Kışlak</span>
+                        Kış mevsiminin daha kolay geçirilebildiği, alçak ve korunaklı konaklama alanıdır. Görseldeki etkileşim noktalarına dokunarak detayları inceleyiniz.
+                    </p>
+                    <div class="info-counter-badge" id="kislak-counter-badge">
+                        <span>Keşif: </span>
+                        <strong id="kislak-counter-text">0 / 3</strong>
+                    </div>
+                </div>
+
+                <div class="interactive-stage visual-stage">
+                    <div class="visual-frame">
+                        <img src="image/kislak.png" alt="Kışlak yaşamı, kar altındaki korunaklı vadi, kış çadırları ve hayvanlar" class="stage-image">
+
+                        <!-- Kışlak Hotspot 1: Korunaklı alan -->
+                        <button type="button" class="info-hotspot hotspot-k1" data-id="k1" aria-label="Korunaklı Bölge bilgisini açınız">
+                            <span class="pulse-ring"></span>
+                            <span class="icon-bubble">🏔️</span>
+                            <span class="bubble-title">Korunaklı Bölge</span>
+                        </button>
+
+                        <!-- Kışlak Hotspot 2: Barınma -->
+                        <button type="button" class="info-hotspot hotspot-k2" data-id="k2" aria-label="Kış Barınağı bilgisini açınız">
+                            <span class="pulse-ring"></span>
+                            <span class="icon-bubble">⛺</span>
+                            <span class="bubble-title">Kış Barınağı</span>
+                        </button>
+
+                        <!-- Kışlak Hotspot 3: Hayvanlar -->
+                        <button type="button" class="info-hotspot hotspot-k3" data-id="k3" aria-label="Hayvanların Korunması bilgisini açınız">
+                            <span class="pulse-ring"></span>
+                            <span class="icon-bubble">🐑</span>
+                            <span class="bubble-title">Hayvanların Korunması</span>
+                        </button>
+
+                        <!-- Bilgi Kartı Popover (Kışlak) -->
+                        <div class="info-popover" id="popover-kislak" role="dialog" aria-modal="true" aria-hidden="true">
+                            <div class="popover-header">
+                                <div class="popover-title-group">
+                                    <span class="popover-icon" id="popover-kislak-icon">🏔️</span>
+                                    <h3 class="popover-title" id="popover-kislak-title">Korunaklı Bölge</h3>
+                                </div>
+                                <button type="button" class="btn-popover-close" aria-label="Bilgi Kartını Kapatınız">✕</button>
+                            </div>
+                            <div class="popover-body">
+                                <p class="popover-text" id="popover-kislak-text">
+                                    Kışlaklar sert kış koşullarından daha az etkilenmek için rüzgâra kapalı, korunaklı vadilerde seçilirdi.
+                                </p>
+                            </div>
+                            <div class="popover-footer">
+                                <span class="popover-note">✓ Bilgi kaydedildi</span>
+                                <button type="button" class="btn btn-sm btn-primary btn-popover-ok">Anladım</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="screen-footer">
+                    <button type="button" class="btn btn-secondary btn-back-home">
+                        <span class="arrow">←</span> Haritaya Dön
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btn-kislak-to-compare">
+                        <span>Karşılaştırma Ekranına Geç</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </footer>
+            </section>
+
+            <!-- 4. EKRAN: KARŞILAŞTIRMA -->
+            <section id="screen-compare" class="screen" aria-labelledby="compare-title">
+                <div class="screen-subbar">
+                    <button type="button" class="btn btn-back btn-back-home" aria-label="Haritaya Geri Dönünüz">
+                        <span class="arrow">←</span> Haritaya Dön
+                    </button>
+                    <p class="guide-text" id="compare-title">
+                        <span class="info-badge">Karşılaştırma</span>
+                        Yaylak ve kışlak bölgelerinin temel özelliklerini inceleyerek aralarındaki farkları değerlendiriniz.
+                    </p>
+                </div>
+
+                <div class="compare-content-grid">
+                    <!-- Sol: Karşılaştırma Tablosu -->
+                    <div class="compare-card">
+                        <div class="table-responsive">
+                            <table class="compare-table">
+                                <thead>
+                                    <tr>
+                                        <th>Özellik</th>
+                                        <th class="th-yaylak">☀️ Yaylak</th>
+                                        <th class="th-kislak">❄️ Kışlak</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="col-feature">Mevsim</td>
+                                        <td class="col-yaylak">Yaz</td>
+                                        <td class="col-kislak">Kış</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="col-feature">Coğrafi Alan</td>
+                                        <td class="col-yaylak">Yüksek ve serin alanlar</td>
+                                        <td class="col-kislak">Alçak ve korunaklı vadiler</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="col-feature">Temel Amaç</td>
+                                        <td class="col-yaylak">Yaz mevsimini geçirmek, hayvanları otlatmak</td>
+                                        <td class="col-kislak">Kış mevsimini kolay geçirmek, soğuktan korunmak</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="col-feature">Önemli Unsur</td>
+                                        <td class="col-yaylak">Geniş ve verimli otlaklar</td>
+                                        <td class="col-kislak">Rüzgâra kapalı korunaklı alan</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="col-feature">Yaşam Biçimi</td>
+                                        <td class="col-yaylak">Konargöçer hayvancılık</td>
+                                        <td class="col-kislak">Konargöçer hayvancılık</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Sağ: Yan Yana Görsel Gösterim -->
+                    <div class="compare-visual-box">
+                        <img src="image/karsilastirma.png" alt="Yaylak ve kışlak yaşamının yan yana karşılaştırması" class="compare-image">
+                        <div class="compare-labels-overlay">
+                            <span class="tag-half tag-left">☀️ Yaylak Düzeni</span>
+                            <span class="tag-half tag-right">❄️ Kışlak Düzeni</span>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="screen-footer">
+                    <button type="button" class="btn btn-secondary btn-back-home">
+                        <span class="arrow">←</span> Harita
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btn-to-decision">
+                        <span>Göç Kararı Aşamasına Geçiniz</span>
+                        <span class="btn-arrow">→</span>
+                    </button>
+                </footer>
+            </section>
+
+            <!-- 5. EKRAN: GÖÇ KARARI -->
+            <section id="screen-decision" class="screen" aria-labelledby="decision-title">
+                <div class="screen-subbar">
+                    <p class="guide-text" id="decision-title">
+                        <span class="info-badge alert-tag">Karar Aşaması</span>
+                        Aşağıdaki durumu inceleyiniz ve mevsimsel koşullara uygun olan doğru adımı seçiniz.
+                    </p>
+                </div>
+
+                <div class="decision-container">
+                    <!-- Senaryo Kartı -->
+                    <div class="scenario-box">
+                        <div class="scenario-icon">❄️🍂</div>
+                        <div class="scenario-text-content">
+                            <span class="scenario-label">Durum Değerlendirmesi:</span>
+                            <h2 class="scenario-heading">Kış yaklaşıyor. Hava soğumaya başladı ve yüksek bölgelerde otlaklar azaldı. Ne yapmalısınız?</h2>
+                        </div>
+                    </div>
+
+                    <!-- Seçenekler -->
+                    <div class="decision-options" role="radiogroup" aria-label="Göç Kararı Seçenekleri">
+                        <!-- Seçenek A -->
+                        <button type="button" class="decision-option-card" id="btn-opt-yaylak" role="radio" aria-checked="false">
+                            <div class="option-indicator">A</div>
+                            <div class="option-body">
+                                <span class="option-title">Yaylakta kal</span>
+                                <span class="option-desc">Yüksek yaylalarda kalmaya devam ederek kışı burada geçiriniz.</span>
+                            </div>
+                            <span class="option-status-icon"></span>
+                        </button>
+
+                        <!-- Seçenek B (Doğru Cevap) -->
+                        <button type="button" class="decision-option-card" id="btn-opt-kislak" role="radio" aria-checked="false">
+                            <div class="option-indicator">B</div>
+                            <div class="option-body">
+                                <span class="option-title">Kışlağa göç et</span>
+                                <span class="option-desc">Daha alçak, ılıman ve korunaklı kışlak alanlarına doğru harekete geçiniz.</span>
+                            </div>
+                            <span class="option-status-icon"></span>
+                        </button>
+                    </div>
+
+                    <!-- Geri Bildirim Kutusu -->
+                    <div class="decision-feedback-box" id="decision-feedback" style="display: none;" aria-live="polite">
+                        <div class="feedback-icon" id="feedback-icon">🎉</div>
+                        <div class="feedback-text-group">
+                            <h3 class="feedback-title" id="feedback-title">Doğru Karar!</h3>
+                            <p class="feedback-message" id="feedback-message">
+                                Kış mevsimi yaklaşırken daha alçak ve korunaklı bölgelere, yani kışlağa göç edilir.
+                            </p>
+                        </div>
+                        <div class="feedback-action">
+                            <button type="button" class="btn btn-success" id="btn-start-migration">
+                                <span>Göçü Başlatınız 🐎</span>
+                                <span class="btn-arrow">→</span>
+                            </button>
+                            <button type="button" class="btn btn-retry" id="btn-retry-decision" style="display:none;">
+                                <span>Tekrar Deneyiniz</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. EKRAN: GÖÇ ANİMASYONU -->
+            <section id="screen-migration" class="screen" aria-labelledby="migration-title">
+                <div class="screen-subbar">
+                    <p class="guide-text" id="migration-title">
+                        <span class="location-badge migration-tag">🐎 Mevsimsel Göç</span>
+                        Yaylak'tan Kışlak'a doğru göç kafilesi hareket ediyor...
+                    </p>
+                    <div class="migration-progress-pill">
+                        <span id="migration-status-text">Kafile Yolculukta...</span>
+                    </div>
+                </div>
+
+                <div class="interactive-stage migration-stage">
+                    <div class="visual-frame">
+                        <img src="image/goc.png" alt="Yaylaktan kışlağa göç eden konvoy, atlar, çadırlar ve hayvan sürüleri" class="stage-image">
+
+                        <!-- Dinamik Göç Katmanı ve Canlandırma -->
+                        <div class="migration-overlay" aria-hidden="true">
+                            <div class="migration-path-curve"></div>
+                            
+                            <!-- Hareket Eden Kafile Simgesi -->
+                            <div class="moving-caravan" id="caravan-actor">
+                                <span class="caravan-icon">🐎</span>
+                                <span class="caravan-sub">Oba Göçü</span>
+                            </div>
+
+                            <!-- Bilgilendirme Rota Kutuları -->
+                            <div class="route-marker marker-start">
+                                <span class="rm-icon">☀️</span>
+                                <span class="rm-text">Yaylak (Yaz Sonu)</span>
+                            </div>
+                            <div class="route-marker marker-mid">
+                                <span class="rm-icon">🏔️</span>
+                                <span class="rm-text">Dağ Geçitleri</span>
+                            </div>
+                            <div class="route-marker marker-end">
+                                <span class="rm-icon">❄️</span>
+                                <span class="rm-text">Kışlak (Varış)</span>
+                            </div>
+                        </div>
+
+                        <!-- Göç Tamamlandı Bildirim Kartı -->
+                        <div class="migration-complete-card" id="migration-complete-card" style="display: none;">
+                            <div class="complete-header">
+                                <span class="complete-icon">🏔️ ✨</span>
+                                <h3>Kışlağa Güvenle Ulaşıldı!</h3>
+                            </div>
+                            <p>Oba ve hayvan sürüleri soğuk kış günlerini korunaklı vadide geçirmek üzere kışlağa başarıyla yerleşti.</p>
+                            <button type="button" class="btn btn-primary" id="btn-to-result">
+                                <span>Sonuç ve Değerlendirmeyi İnceleyiniz</span>
+                                <span class="btn-arrow">→</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. EKRAN: SONUÇ VE DEĞERLENDİRME -->
+            <section id="screen-result" class="screen" aria-labelledby="result-title">
+                <div class="result-content-container">
+                    <div class="result-celebration-badge">
+                        <span class="badge-star">✨</span>
+                        <span>Öğrenme Özeti</span>
+                        <span class="badge-star">✨</span>
+                    </div>
+
+                    <h2 class="result-main-title" id="result-title">Göç Yolculuğunu Başarıyla Tamamladınız!</h2>
+                    <p class="result-main-desc">
+                        Yaylak ve kışlak arasında yapılan mevsimsel hareketlilik, konargöçer yaşamın ve hayvancılık kültürünün temel özelliklerinden biridir.
+                    </p>
+
+                    <!-- 4'lü Öğrenme Özeti Kartları -->
+                    <div class="summary-cards-grid">
+                        <div class="summary-card card-summer">
+                            <div class="card-icon">☀️</div>
+                            <div class="card-content">
+                                <h3>Yaz → Yaylak</h3>
+                                <p>Yüksek ve serin alanlardaki zengin otlaklarda hayvanlar beslenir.</p>
+                            </div>
+                        </div>
+
+                        <div class="summary-card card-winter">
+                            <div class="card-icon">❄️</div>
+                            <div class="card-content">
+                                <h3>Kış → Kışlak</h3>
+                                <p>Alçak ve korunaklı vadilerde sert kış soğuklarından ve rüzgârdan korunulur.</p>
+                            </div>
+                        </div>
+
+                        <div class="summary-card card-husbandry">
+                            <div class="card-icon">🐎</div>
+                            <div class="card-content">
+                                <h3>Hayvancılık</h3>
+                                <p>Sürülerin beslenmesi ve korunması, konargöçer ekonominin ve yaşamın temelidir.</p>
+                            </div>
+                        </div>
+
+                        <div class="summary-card card-nomad">
+                            <div class="card-icon">🏕️</div>
+                            <div class="card-content">
+                                <h3>Konargöçer Düzen</h3>
+                                <p>Doğanın mevsimsel döngüsüne ve iklim şartlarına uyumlu dinamik bir yaşam tarzıdır.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aksiyon Butonları -->
+                    <div class="result-actions">
+                        <button type="button" class="btn btn-secondary" id="btn-restart-activity">
+                            <span class="btn-icon">🔄</span>
+                            <span>Etkinliği Yeniden Başlat</span>
+                        </button>
+                        <button type="button" class="btn btn-primary" id="btn-return-home">
+                            <span class="btn-icon">🗺️</span>
+                            <span>Haritaya Dön</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

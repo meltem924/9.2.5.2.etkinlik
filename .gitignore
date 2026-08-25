@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+dist/
+build/
+*.zip
+
+# Large files
+*.pdf
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

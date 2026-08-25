@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="tr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bozkırın Efendisi: Yaylak Simülasyonu</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        steppe: {
+                            50: '#faf6f0',
+                            100: '#f3ece0',
+                            200: '#e5d7be',
+                            300: '#d4be97',
+                            400: '#c2a170',
+                            500: '#b0874e',
+                            600: '#946d3e',
+                            700: '#755433',
+                            800: '#5c432d',
+                            900: '#2b1e13',
+                            950: '#1a120b',
+                        },
+                        amberGold: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Özelleştirilmiş Kaydırma Çubuğu */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2b1e13;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #5c432d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #946d3e;
+        }
+
+        /* Akıcı geçiş efektleri */
+        .card-transition {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .pulse-subtle {
+            animation: pulseSubtle 2s infinite ease-in-out;
+        }
+        @keyframes pulseSubtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Sürükle Bırak / Yerleşim Animasyonları */
+        .drop-target-active {
+            border-color: #f59e0b !important;
+            background-color: rgba(245, 158, 11, 0.15) !important;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-steppe-950 text-steppe-100 min-h-full flex flex-col font-sans selection:bg-amber-500 selection:text-steppe-950">
+
+    <!-- Ana Çerçeve -->
+    <div class="flex-1 flex flex-col justify-between max-w-5xl w-full mx-auto p-3 sm:p-5 md:p-8">
+        
+        <!-- Üst Başlık & Kontrol Paneli -->
+        <header class="bg-steppe-900 border border-steppe-800 rounded-2xl p-4 sm:p-5 shadow-2xl mb-4 sm:mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl sm:text-2xl text-amber-400">
+                        🏕️
+                    </div>
+                    <div>
+                        <h1 class="text-base sm:text-xl md:text-2xl font-bold text-amber-400 tracking-tight flex items-center gap-2">
+                            Bozkırın Efendisi: Yaylak Simülasyonu
+                        </h1>
+                        <p class="text-xs sm:text-sm text-steppe-300">
+                            Orta Asya Konargöçer Yaşamı ve Yaylak Kültürü
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Kut Puanı ve Butonlar -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="flex items-center bg-steppe-950/80 border border-amber-500/40 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2">
+                        <span class="text-amber-400 text-xs sm:text-sm font-medium mr-2">Kut Puanı:</span>
+                        <span id="scoreBadge" class="text-amber-400 font-extrabold text-sm sm:text-lg">100</span>
+                    </div>
+
+                    <!-- Ses Aç/Kapat Butonu -->
+                    <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 sm:p-2.5 rounded-xl bg-steppe-800 hover:bg-steppe-700 text-steppe-200 hover:text-amber-400 border border-steppe-700 transition" title="Sesi Aç/Kapat">
+                        <span id="soundIcon">🔊</span>
+                    </button>
+
+                    <!-- Tam Ekran Butonu -->
+                    <button onclick="toggleFullScreen()" class="p-2 sm:p-2.5 rounded-xl bg-steppe-800 hover:bg-steppe-700 text-steppe-200 hover:text-amber-400 border border-steppe-700 transition" title="Tam Ekran Modu">
+                        <span id="fullscreenIcon">⛶</span>
+                    </button>
+
+                    <!-- Yeniden Başlat Butonu -->
+                    <button onclick="confirmRestart()" class="p-2 sm:p-2.5 rounded-xl bg-steppe-800 hover:bg-rose-900/60 text-steppe-200 hover:text-rose-300 border border-steppe-700 transition" title="Simülasyonu Yeniden Başlat">
+                        <span>🔄</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- İlerleme Çubuğu ve Aşama Göstergesi -->
+            <div class="mt-4 sm:mt-5 pt-4 border-t border-steppe-800/80">
+                <div class="flex items-center justify-between text-xs sm:text-sm text-steppe-400 mb-2">
+                    <span id="stageBadgeText" class="font-medium text-amber-300">1. Aşama / 6</span>
+                    <span id="stagePercentText" class="font-semibold text-steppe-300">%0 Tamamlandı</span>
+                </div>
+                <div class="w-full h-2.5 bg-steppe-950 rounded-full overflow-hidden p-0.5 border border-steppe-800">
+                    <div id="progressBar" class="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-500 ease-out" style="width: 0%;"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dinamik Simülasyon Alanı -->
+        <main id="simulationCard" class="bg-steppe-900 border border-steppe-800 rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl flex-1 flex flex-col justify-between">
+            <!-- İçerik JavaScript Tarafından Doldurulur -->
+            <div id="stageContainer" class="flex-1 flex flex-col justify-between"></div>
+        </main>
+
+        <!-- Alt Bilgi / MEBİ Standartları Uyarınca -->
+        <footer class="mt-4 text-center text-xs text-steppe-400">
+            Tarih Dersi Öğretim Programı • Konargöçer Yaşam ve Yaylak Kültürü Simülasyonu
+        </footer>
+    </div>
+
+    <!-- Onay Modalı (Yeniden Başlatma) -->
+    <div id="restartModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-steppe-900 border border-steppe-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-amber-400 mb-2">Simülasyonu Yeniden Başlat</h3>
+            <p class="text-sm text-steppe-200 mb-6">
+                Mevcut ilerlemeniz ve Kut puanınız sıfırlanacaktır. Baştan başlamak istediğinizden emin misiniz?
+            </p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeRestartModal()" class="px-4 py-2 rounded-xl bg-steppe-800 text-steppe-200 hover:bg-steppe-700 text-sm font-medium transition">
+                    İptal
+                </button>
+                <button onclick="executeRestart()" class="px-4 py-2 rounded-xl bg-amber-500 text-steppe-950 hover:bg-amber-400 font-bold text-sm transition">
+                    Yeniden Başlat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio API ile Hafif ve Hoş Ses Efektleri
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+                if (type === 'success') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(280, now);
+                    osc.frequency.linearRampToValueAtTime(160, now + 0.25);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'win') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.15);
+                    osc.frequency.setValueAtTime(783.99, now + 0.3);
+                    osc.frequency.setValueAtTime(1046.50, now + 0.45);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.75);
+                    osc.start(now);
+                    osc.stop(now + 0.75);
+                }
+            } catch (e) {
+                // Ses desteği yoksa sessizce devam eder
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundIcon').innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+                document.getElementById('fullscreenIcon').innerText = '⤦';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                    document.getElementById('fullscreenIcon').innerText = '⛶';
+                }
+            }
+        }
+
+        function confirmRestart() {
+            document.getElementById('restartModal').classList.remove('hidden');
+        }
+
+        function closeRestartModal() {
+            document.getElementById('restartModal').classList.add('hidden');
+        }
+
+        function executeRestart() {
+            closeRestartModal();
+            restartSimulation();
+        }
+
+        // Dizi Elemanlarını Karıştırma Fonksiyonu (Fisher-Yates)
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // SİMÜLASYON VERİ SETİ (Kazanım Odaklı, MEBİ ve Pedagojik İlkelerle Uyumlu)
+        const simulationStages = [
+            {
+                stage: 1,
+                title: "1. Aşama: Göç Vakti ve Doğayı Okuma",
+                topic: "Meteorolojik Gözlemler & Yaylak-Kışlak Döngüsü",
+                desc: "Kışlakta havalar ısınmaya başladı. Erken göç hayvanları dondurucu soğuklara maruz bırakabilir; geç kalmak ise yaylaktaki taze otlakların verimini kaçırabilir. Obanın lideri olarak doğadaki işaretleri analiz ediniz ve en uygun adımı belirleyiniz:",
+                type: "cards",
+                options: [
+                    {
+                        id: "A",
+                        icon: "🌸",
+                        title: "Ayva Çiçekleri & Büğelek Sinekleri",
+                        desc: "Ayva ağaçlarının vaktinde çiçek açması ve atların sırtında bahar sineklerinin görülmesi, sert don tehlikesinin bittiğini gösterir.",
+                        correct: true,
+                        feedback: "Doğru bir değerlendirme yaptınız. Bozkır insanı tabiatı bir takvim gibi okur ve meteorolojik gözlemlerle sürülerin güvenliğini sağlar. Yaylağa göç emri verildi (+15 Kut)."
+                    },
+                    {
+                        id: "B",
+                        icon: "⏳",
+                        title: "Göçü İptal Edip Kerpiç Şehir Kurmak",
+                        desc: "Vadide kalıcı kerpiç evler inşa edip tarım odaklı yerleşik hayata geçmek, yaylağa hiç çıkmamak.",
+                        correct: false,
+                        feedback: "Bu tercih bozkır şartlarına uygun değildir. Bozkır coğrafyasında otlaklar kısıtlıdır; Bilge Kağan ve Vezir Tonyukuk'un da belirttiği üzere göçebelik, sürüler için yeni meralar bulmanın ve düşmana karşı savunma gücünü korumanın temelidir (-15 Kut)."
+                    }
+                ]
+            },
+            {
+                stage: 2,
+                title: "2. Aşama: Çadır (Yurt) İçi Mekân Düzeni",
+                topic: "Konargöçer Barınma Mimarisi ve Fonksiyonel Yerleşim",
+                desc: "Yaylağa ulaşıldı ve keçe çadır (yurt) kuruldu. Çadır içindeki unsurları konargöçer yaşamın gereksinimlerine ve güvenliğe uygun doğru bölümlere yerleştiriniz:",
+                type: "tent_interactive",
+                slots: [
+                    {
+                        id: "slot_sol",
+                        label: "Sol Taraf (Giriş Yanı)",
+                        expectedId: "item_silah",
+                        expectedName: "Koşum Takımları & Silahlar",
+                        reason: "Beklenmedik bir tehlike anında hızla ata binmek ve savunmaya geçmek için girişe en yakın sol tarafta tutulur."
+                    },
+                    {
+                        id: "slot_orta",
+                        label: "Tam Merkez",
+                        expectedId: "item_ocak",
+                        expectedName: "Korluk (Ocak)",
+                        reason: "Çadırın her köşesine eşit ısı dağıtılması ve dumanın tepedeki dumanlıktan (tündük) rahatça çıkması için merkezde yer alır."
+                    },
+                    {
+                        id: "slot_sag",
+                        label: "Sağ Taraf",
+                        expectedId: "item_erzak",
+                        expectedName: "Yiyecek Sandıkları & Kiler",
+                        reason: "Günlük erzakların ve kapların düzenli muhafazası ile çadır içi düzenin korunması amacıyla sağ alanda saklanır."
+                    },
+                    {
+                        id: "slot_tör",
+                        label: "Başköşe (Tör)",
+                        expectedId: "item_kerevet",
+                        expectedName: "Kerevet (Ahşap Sedir)",
+                        reason: "Girişin tam karşısındaki en korunaklı ve saygın alan olup boy büyükleri ve konuklar için ayrılmıştır."
+                    }
+                ],
+                items: [
+                    { id: "item_silah", icon: "🏹", name: "Koşum Takımları & Silahlar", hint: "Acil müdahale ve savunma gereçleri" },
+                    { id: "item_ocak", icon: "🔥", name: "Korluk (Ocak)", hint: "Isınma ve duman tahliyesi merkezi" },
+                    { id: "item_erzak", icon: "🏺", name: "Yiyecek Sandıkları & Kiler", hint: "Kurutulmuş gıda ve eşya muhafazası" },
+                    { id: "item_kerevet", icon: "👑", name: "Kerevet (Ahşap Sedir)", hint: "Saygıdeğer konuklar ve aile büyükleri için" }
+                ]
+            },
+            {
+                stage: 3,
+                title: "3. Aşama: Teşkilatlanma (Oguş'tan İl'e)",
+                topic: "Toplumsal Hiyerarşi ve Devlet Teşkilatı",
+                desc: "Konargöçer toplum yapısında düzen ve ordu-millet birliğini sağlayan basamakları en küçük birimden (1. Basamak) en büyük siyasi yapıya (5. Basamak) doğru sıralayınız:",
+                type: "reordering",
+                correctSequence: [
+                    { id: "ogus", name: "Oguş (Aile)", desc: "Toplumun en temel yapı taşı" },
+                    { id: "urug", name: "Urug (Sülale / Aileler Birliği)", desc: "Akraba ailelerin oluşturduğu topluluk" },
+                    { id: "boy", name: "Boy (Kabile / Ok)", desc: "Kendi beyi ve damgası olan boylar" },
+                    { id: "budun", name: "Budun (Boylar Federasyonu / Millet)", desc: "Boyların birleşimiyle oluşan halk" },
+                    { id: "il", name: "İl / El (Devlet)", desc: "Bağımsız en üst siyasi teşkilat" }
+                ]
+            },
+            {
+                stage: 4,
+                title: "4. Aşama: Zanaat ve Dış Ticaret Dengesi",
+                topic: "Maden İşleme, Dokumacılık ve İhtiyaç Takası",
+                desc: "Demircileriniz kılıç ve zırh işledi, dokumacılarınız dayanıklı keçe ve kilim üretti. Komşu tüccarlar obanıza geldi. Fazla madeni ve dokuma ürünler karşılığında obanın ihtiyacı olan hangi ürünleri takas etmelisiniz?",
+                type: "cards",
+                options: [
+                    {
+                        id: "A",
+                        icon: "🌾",
+                        title: "Tahıl (Hububat), Pirinç ve İpek Kumaş",
+                        desc: "Demir eşya, deri ve canlı hayvan karşılığında bozkırda yetiştirilemeyen temel tarım ürünlerini ve kumaş almak.",
+                        correct: true,
+                        feedback: "Doğru bir ekonomik tercih yaptınız. Konargöçerler hayvansal ve madeni ürünleri satıp, bozkır ikliminde üretilemeyen tarımsal gıdaları ve ipeği dış ticaretten temin etmişlerdir (+15 Kut)."
+                    },
+                    {
+                        id: "B",
+                        icon: "🏛️",
+                        title: "Ağır Mermer Sütunlar ve Yapı Taşları",
+                        desc: "Çadırların etrafına kalıcı taş anıtlar ve ağır mimari süslemeler koymak için taş talep etmek.",
+                        correct: false,
+                        feedback: "Bu seçim konargöçer yaşam mantığına terstir. Hareket kabiliyetini kısıtlayan ve taşınması zor ağır taş bloklar konargöçer ekonomisinde yük oluşturur (-15 Kut)."
+                    }
+                ]
+            },
+            {
+                stage: 5,
+                title: "5. Aşama: Yaylak Toyu ve Beslenme Kültürü",
+                topic: "Dayanıklı Hayvansal Gıdalar ve Bozkır Mutfağı",
+                desc: "Yaylakta birlik ve beraberliği pekiştirmek için büyük bir toy (şölen) düzenleniyor. Konargöçer kültürüne ve uzun yol şartlarına uygun menüyü seçiniz:",
+                type: "cards",
+                options: [
+                    {
+                        id: "A",
+                        icon: "🍖",
+                        title: "Pastırma, Kavurma, Tutmaç Çorbası ve Kımız",
+                        desc: "Basılarak kurutulmuş et (pastırma), etli hamur aşı (tutmaç) ve fermente kısrak sütü (kımız).",
+                        correct: true,
+                        feedback: "Bozkır mutfağını doğru analiz ettiniz. Pastırma gibi kurutulmuş etler göç sırasında bozulmadan enerji sağlayan kritik besin kaynaklarıdır (+15 Kut)."
+                    },
+                    {
+                        id: "B",
+                        icon: "🥗",
+                        title: "Taze Deniz Ürünleri ve Zeytinyağlı Sebzeler",
+                        desc: "Akdeniz iklimine özgü, çabuk bozulan ve yerleşik tarım mahsulü menü.",
+                        correct: false,
+                        feedback: "Bu menü bozkır coğrafyası ve konargöçer ekonomiyle örtüşmez. Bozkırın temel besin kaynağı et, süt ürünleri (kurut, kımız) ve tahıllardır (-15 Kut)."
+                    }
+                ]
+            },
+            {
+                stage: 6,
+                title: "6. Aşama: Töre Meclisi ve Bozkır Hukuku",
+                topic: "Dinamik Yaşama Uygun Hukuk Sistemi ve Ceza Yaptırımları",
+                desc: "Toy sırasında bir kişi sürüye ait bir atı izinsiz alıp kaçırmaya çalışırken yakalandı. Töre hükümlerine ve konargöçer yaşam tarzına göre nasıl bir ceza uygulanmalıdır?",
+                type: "cards",
+                options: [
+                    {
+                        id: "A",
+                        icon: "⚖️",
+                        title: "Kısa Süreli Hapis (En Çok 10 Gün) veya Tazminat / Sürgün",
+                        desc: "Sürekli hareket halinde olunduğu için ceza hızlı, kesin ve taşınabilir düzene uygun şekilde infaz edilir.",
+                        correct: true,
+                        feedback: "Töreye ve yaşam biçimine tam uygun bir karar verdiniz. Konargöçerlerde sabit hapishane binaları bulunmadığı için uzun süreli hapis cezası uygulanmaz (+15 Kut)."
+                    },
+                    {
+                        id: "B",
+                        icon: "🏰",
+                        title: "20 Yıl Yüksek Surlu Taş Zindanda Ağır Hapis",
+                        desc: "Suçluyu obanın yanına inşa edilecek kalıcı bir zindana onlarca yıl hapsetmek.",
+                        correct: false,
+                        feedback: "Bu yaklaşım göçebe yapıya uymaz. Konargöçer toplumlar sürekli yer değiştirdiği için taş yapılı sabit cezaevleri ve uzun yıllar süren hapis cezaları görülmez (-15 Kut)."
+                    }
+                ]
+            }
+        ];
+
+        // Durum Yönetimi
+        let currentStageIndex = 0;
+        let score = 100;
+        let tentState = {}; // slotId -> itemId
+        let reorderState = []; // Geçerli sıralama dizisi
+        let activeSelectedItem = null; // Çadır yerleşimi için seçili öge
+
+        function updateHeader() {
+            document.getElementById('scoreBadge').innerText = score;
+            const total = simulationStages.length;
+            const progress = (currentStageIndex / total) * 100;
+            document.getElementById('progressBar').style.width = `${Math.min(100, Math.round(progress))}%`;
+            
+            if (currentStageIndex < total) {
+                document.getElementById('stageBadgeText').innerText = `${currentStageIndex + 1}. Aşama / ${total}`;
+                document.getElementById('stagePercentText').innerText = `%${Math.round(progress)} Tamamlandı`;
+            } else {
+                document.getElementById('stageBadgeText').innerText = `Sonuç Raporu`;
+                document.getElementById('stagePercentText').innerText = `%100 Tamamlandı`;
+            }
+        }
+
+        function renderStage() {
+            updateHeader();
+            const container = document.getElementById('stageContainer');
+
+            if (currentStageIndex >= simulationStages.length) {
+                renderFinalReport();
+                return;
+            }
+
+            const data = simulationStages[currentStageIndex];
+
+            // Üst Açıklama ve Başlık
+            let html = `
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                        <span>Aşama ${data.stage}</span> • <span>${data.topic}</span>
+                    </div>
+                    <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-steppe-50 mb-2">
+                        ${data.title}
+                    </h2>
+                    <p class="text-sm sm:text-base text-steppe-300 leading-relaxed mb-6">
+                        ${data.desc}
+                    </p>
+
+                    <!-- İnteraktif Gövde -->
+                    <div id="interactiveArea" class="mb-6"></div>
+
+                    <!-- Geri Bildirim Kutusu -->
+                    <div id="feedbackBox" class="hidden rounded-xl p-4 sm:p-5 border text-sm sm:text-base leading-relaxed card-transition"></div>
+                </div>
+
+                <!-- Alt Kontrol Çubuğu -->
+                <div class="pt-5 mt-6 border-t border-steppe-800 flex items-center justify-between gap-4">
+                    <span class="text-xs sm:text-sm text-steppe-400">
+                        Adım ${data.stage} / ${simulationStages.length}
+                    </span>
+                    <button id="nextBtn" onclick="nextStage()" disabled class="px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl font-bold text-sm sm:text-base bg-amber-500 text-steppe-950 hover:bg-amber-400 disabled:opacity-40 disabled:hover:bg-amber-500 disabled:cursor-not-allowed transition flex items-center gap-2 shadow-lg shadow-amber-500/10">
+                        <span>Sonraki Adım</span>
+                        <span>➔</span>
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = html;
+            const area = document.getElementById('interactiveArea');
+
+            // 1. KART SEÇİMİ AŞAMALARI
+            if (data.type === "cards") {
+                // Seçenekleri karıştırarak konum tahminini engelle
+                const shuffledOptions = shuffleArray(data.options);
+                let gridHtml = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+                shuffledOptions.forEach((opt) => {
+                    gridHtml += `
+                        <div class="action-card bg-steppe-950/60 border-2 border-steppe-800 hover:border-amber-500/60 rounded-xl p-4 sm:p-5 cursor-pointer card-transition flex flex-col justify-between" onclick="handleCardSelect('${opt.id}')" data-card-id="${opt.id}">
+                            <div>
+                                <div class="flex items-center gap-3 mb-2.5">
+                                    <span class="text-2xl">${opt.icon}</span>
+                                    <h4 class="font-bold text-steppe-100 text-sm sm:text-base">${opt.title}</h4>
+                                </div>
+                                <p class="text-xs sm:text-sm text-steppe-300 leading-relaxed">${opt.desc}</p>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-steppe-800/80 flex items-center justify-between text-xs text-amber-400/80 font-medium">
+                                <span>Kararı Seç</span>
+                                <span>➜</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                gridHtml += `</div>`;
+                area.innerHTML = gridHtml;
+            }
+
+            // 2. ÇADIR İÇİ ETKİLEŞİMLİ YERLEŞİM (TENT PUZZLE)
+            else if (data.type === "tent_interactive") {
+                tentState = {};
+                activeSelectedItem = null;
+                renderTentInteractive();
+            }
+
+            // 3. TEŞKİLATLANMA SIRALAMA AŞAMASI (REORDERING)
+            else if (data.type === "reordering") {
+                // Başlangıçta mutlaka karıştırılmış olsun
+                reorderState = shuffleArray(data.correctSequence);
+                // Eğer şans eseri tam doğru sırada gelirse tekrar karıştır
+                while (isSequenceCorrect(reorderState, data.correctSequence) && data.correctSequence.length > 1) {
+                    reorderState = shuffleArray(data.correctSequence);
+                }
+                renderReorderingStage();
+            }
+        }
+
+        // Kart Seçimi Mantığı
+        function handleCardSelect(selectedId) {
+            const data = simulationStages[currentStageIndex];
+            const selectedOpt = data.options.find(o => o.id === selectedId);
+            const feedbackBox = document.getElementById('feedbackBox');
+            const nextBtn = document.getElementById('nextBtn');
+            const cards = document.querySelectorAll('.action-card');
+
+            cards.forEach(card => {
+                const cardId = card.getAttribute('data-card-id');
+                const opt = data.options.find(o => o.id === cardId);
+                card.onclick = null; // Tekrar tıklamayı engelle
+                card.classList.remove('hover:border-amber-500/60', 'cursor-pointer');
+
+                if (cardId === selectedId) {
+                    if (opt.correct) {
+                        card.classList.add('border-emerald-500', 'bg-emerald-950/40');
+                        feedbackBox.className = "rounded-xl p-4 sm:p-5 border border-emerald-500/50 bg-emerald-950/40 text-emerald-200 block";
+                        feedbackBox.innerHTML = `
+                            <div class="flex items-start gap-3">
+                                <span class="text-xl">✔</span>
+                                <div>
+                                    <strong class="text-emerald-400 block mb-1 font-bold">Tebrikler!</strong>
+                                    ${opt.feedback}
+                                </div>
+                            </div>
+                        `;
+                        score += 15;
+                        playSound('success');
+                    } else {
+                        card.classList.add('border-rose-500', 'bg-rose-950/40');
+                        feedbackBox.className = "rounded-xl p-4 sm:p-5 border border-rose-500/50 bg-rose-950/40 text-rose-200 block";
+                        feedbackBox.innerHTML = `
+                            <div class="flex items-start gap-3">
+                                <span class="text-xl">✖</span>
+                                <div>
+                                    <strong class="text-rose-400 block mb-1 font-bold">Önemli Çıkarım:</strong>
+                                    ${opt.feedback}
+                                </div>
+                            </div>
+                        `;
+                        score = Math.max(0, score - 15);
+                        playSound('error');
+                    }
+                } else {
+                    card.classList.add('opacity-60');
+                }
+            });
+
+            document.getElementById('scoreBadge').innerText = score;
+            nextBtn.disabled = false;
+            nextBtn.classList.add('pulse-subtle');
+        }
+
+        // Çadır Yerleşim Arayüzü Oluşturucu
+        function renderTentInteractive() {
+            const data = simulationStages[currentStageIndex];
+            const area = document.getElementById('interactiveArea');
+            const feedbackBox = document.getElementById('feedbackBox');
+
+            // Kullanılabilir Ögeler (Henüz bir slota yerleştirilmemiş olanlar)
+            const placedItemIds = Object.values(tentState);
+            const availableItems = data.items.filter(i => !placedItemIds.includes(i.id));
+
+            let html = `
+                <div class="space-y-4">
+                    <!-- Öge Havuzu -->
+                    <div>
+                        <div class="text-xs font-semibold text-steppe-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                            <span>Yerleştirilecek Çadır Unsurları:</span>
+                            <span class="text-amber-400 text-xs">${availableItems.length} Öge Kaldı</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            `;
+
+            data.items.forEach(item => {
+                const isPlaced = placedItemIds.includes(item.id);
+                const isSelected = activeSelectedItem === item.id;
+                html += `
+                    <button type="button" 
+                        onclick="selectTentItem('${item.id}')"
+                        ${isPlaced ? 'disabled' : ''}
+                        class="p-3 rounded-xl border text-left card-transition flex flex-col justify-between min-h-[85px] ${
+                            isPlaced 
+                                ? 'bg-steppe-950/30 border-steppe-800/40 text-steppe-600 opacity-40 cursor-not-allowed' 
+                                : isSelected 
+                                    ? 'bg-amber-500/20 border-amber-400 ring-2 ring-amber-400/50 text-steppe-100 shadow-md' 
+                                    : 'bg-steppe-950/70 border-steppe-700 hover:border-amber-500/70 text-steppe-200'
+                        }">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${item.icon}</span>
+                            <span class="font-bold text-xs sm:text-sm leading-tight">${item.name}</span>
+                        </div>
+                        <span class="text-[11px] text-steppe-400 mt-1">${isPlaced ? '✓ Yerleştirildi' : (isSelected ? 'Hedef Alanı Seçin' : item.hint)}</span>
+                    </button>
+                `;
+            });
+
+            html += `
+                        </div>
+                    </div>
+
+                    <!-- Çadır Planı (Yurt Şeması) -->
+                    <div>
+                        <div class="text-xs font-semibold text-steppe-400 uppercase tracking-wider mb-2">
+                            Keçe Çadır (Yurt) Yerleşim Planı:
+                        </div>
+                        <div class="bg-steppe-950/80 border-2 border-dashed border-steppe-700 rounded-2xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            `;
+
+            data.slots.forEach(slot => {
+                const placedItemId = tentState[slot.id];
+                const placedItem = placedItemId ? data.items.find(i => i.id === placedItemId) : null;
+                const isCorrect = placedItemId === slot.expectedId;
+
+                html += `
+                    <div onclick="placeItemInSlot('${slot.id}')"
+                        class="rounded-xl border p-3.5 min-h-[110px] flex flex-col justify-between card-transition cursor-pointer ${
+                            placedItem 
+                                ? isCorrect 
+                                    ? 'bg-emerald-950/30 border-emerald-500/60' 
+                                    : 'bg-rose-950/30 border-rose-500/60'
+                                : 'bg-steppe-900/60 border-steppe-700/80 hover:border-amber-400 hover:bg-steppe-900'
+                        }">
+                        <div class="flex items-center justify-between text-xs text-steppe-400 mb-1">
+                            <span class="font-semibold text-amber-300">📍 ${slot.label}</span>
+                            ${placedItem ? (isCorrect ? '<span class="text-emerald-400 text-xs">✔ Uygun</span>' : '<span class="text-rose-400 text-xs">✖ Hatalı</span>') : '<span class="text-steppe-500 text-[11px]">Boş</span>'}
+                        </div>
+
+                        <div class="py-1">
+                            ${placedItem 
+                                ? `<div class="font-bold text-xs sm:text-sm text-steppe-100 flex items-center gap-1.5">${placedItem.icon} ${placedItem.name}</div>`
+                                : `<div class="text-xs text-steppe-500 italic">Öge seçip buraya tıklayınız</div>`
+                            }
+                        </div>
+
+                        <div class="text-[11px] text-steppe-400 leading-tight pt-1.5 border-t border-steppe-800/60">
+                            ${placedItem ? slot.reason : 'Konargöçer mantığına göre eşleştiriniz'}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            area.innerHTML = html;
+
+            // Kontrol Et: Bütün slotlar doldu mu?
+            const totalSlots = data.slots.length;
+            const filledSlots = Object.keys(tentState).length;
+
+            if (filledSlots === totalSlots) {
+                // Doğruluk kontrolü
+                let allCorrect = true;
+                data.slots.forEach(slot => {
+                    if (tentState[slot.id] !== slot.expectedId) {
+                        allCorrect = false;
+                    }
+                });
+
+                feedbackBox.classList.remove('hidden');
+                if (allCorrect) {
+                    feedbackBox.className = "rounded-xl p-4 sm:p-5 border border-emerald-500/50 bg-emerald-950/40 text-emerald-200 block";
+                    feedbackBox.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <span class="text-xl">✔</span>
+                            <div>
+                                <strong class="text-emerald-400 block mb-1 font-bold">Mükemmel Yerleşim!</strong>
+                                Çadır içi mekân düzenini konargöçer yaşamın güvenlik, ısınma, hijyen ve sosyal hiyerarşi kurallarına tam uygun olarak organize ettiniz (+20 Kut Puanı).
+                            </div>
+                        </div>
+                    `;
+                    playSound('success');
+                } else {
+                    feedbackBox.className = "rounded-xl p-4 sm:p-5 border border-amber-500/50 bg-amber-950/40 text-amber-200 block";
+                    feedbackBox.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <span class="text-xl">ℹ️</span>
+                            <div>
+                                <strong class="text-amber-400 block mb-1 font-bold">Yerleşim Analizi Tamamlandı:</strong>
+                                Bazı ögelerin yerleri farklı olsa da çadır içi işleyiş kurallarını incelediniz. Ortada ocak, girişte savunma gereçleri, sağda erzak ve başköşede konuk alanı bulunur.
+                            </div>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('nextBtn').disabled = false;
+                document.getElementById('nextBtn').classList.add('pulse-subtle');
+            }
+        }
+
+        function selectTentItem(itemId) {
+            playSound('click');
+            activeSelectedItem = (activeSelectedItem === itemId) ? null : itemId;
+            renderTentInteractive();
+        }
+
+        function placeItemInSlot(slotId) {
+            if (!activeSelectedItem) {
+                // Eğer slotta zaten bir öge varsa onu geri çıkar
+                if (tentState[slotId]) {
+                    playSound('click');
+                    delete tentState[slotId];
+                    renderTentInteractive();
+                }
+                return;
+            }
+
+            playSound('click');
+            // Seçili öge daha önce başka bir slottaysa oradan temizle
+            for (let s in tentState) {
+                if (tentState[s] === activeSelectedItem) {
+                    delete tentState[s];
+                }
+            }
+
+            tentState[slotId] = activeSelectedItem;
+            activeSelectedItem = null;
+            renderTentInteractive();
+        }
+
+        // 3. TEŞKİLATLANMA SIRALAMA MANTIĞI
+        function isSequenceCorrect(current, target) {
+            for (let i = 0; i < target.length; i++) {
+                if (!current[i] || current[i].id !== target[i].id) return false;
+            }
+            return true;
+        }
+
+        function renderReorderingStage() {
+            const data = simulationStages[currentStageIndex];
+            const area = document.getElementById('interactiveArea');
+
+            let html = `
+                <div>
+                    <div class="flex items-center justify-between text-xs font-semibold text-steppe-400 uppercase tracking-wider mb-2">
+                        <span>Toplumsal Hiyerarşi Basamakları (1'den 5'e Sıralayınız):</span>
+                        <span class="text-amber-400">Yukarı / Aşağı Butonlarını Kullanınız</span>
+                    </div>
+
+                    <div class="space-y-2.5">
+            `;
+
+            reorderState.forEach((item, index) => {
+                html += `
+                    <div class="bg-steppe-950/70 border border-steppe-700/80 rounded-xl p-3.5 sm:p-4 flex items-center justify-between gap-3 card-transition hover:border-steppe-600">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold flex items-center justify-center text-sm">
+                                ${index + 1}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm sm:text-base text-steppe-100">${item.name}</h4>
+                                <p class="text-xs text-steppe-400">${item.desc}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="moveOrderItem(${index}, -1)" ${index === 0 ? 'disabled' : ''} class="w-8 h-8 rounded-lg bg-steppe-800 hover:bg-steppe-700 disabled:opacity-30 disabled:cursor-not-allowed text-steppe-200 hover:text-amber-400 flex items-center justify-center font-bold text-sm border border-steppe-700 transition" title="Yukarı Taşı">
+                                ▲
+                            </button>
+                            <button onclick="moveOrderItem(${index}, 1)" ${index === reorderState.length - 1 ? 'disabled' : ''} class="w-8 h-8 rounded-lg bg-steppe-800 hover:bg-steppe-700 disabled:opacity-30 disabled:cursor-not-allowed text-steppe-200 hover:text-amber-400 flex items-center justify-center font-bold text-sm border border-steppe-700 transition" title="Aşağı Taşı">
+                                ▼
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="checkReordering()" class="px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-sm font-bold transition flex items-center gap-2">
+                            <span>🔍 Sıralamayı Kontrol Et</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            area.innerHTML = html;
+        }
+
+        function moveOrderItem(index, direction) {
+            playSound('click');
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= reorderState.length) return;
+
+            const temp = reorderState[index];
+            reorderState[index] = reorderState[targetIndex];
+            reorderState[targetIndex] = temp;
+
+            renderReorderingStage();
+        }
+
+        function checkReordering() {
+            const data = simulationStages[currentStageIndex];
+            const feedbackBox = document.getElementById('feedbackBox');
+            const nextBtn = document.getElementById('nextBtn');
+            const correct = isSequenceCorrect(reorderState, data.correctSequence);
+
+            feedbackBox.classList.remove('hidden');
+
+            if (correct) {
+                feedbackBox.className = "rounded-xl p-4 sm:p-5 border border-emerald-500/50 bg-emerald-950/40 text-emerald-200 block";
+                feedbackBox.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <span class="text-xl">✔</span>
+                        <div>
+                            <strong class="text-emerald-400 block mb-1 font-bold">Harika! Doğru Hiyerarşik Sıralama:</strong>
+                            <strong>Oguş (Aile) ➔ Urug (Sülale) ➔ Boy (Kabile) ➔ Budun (Millet) ➔ İl (Devlet)</strong>.<br>
+                            Bu örgütlenme modeli, konargöçer Türklerin barışta dayanışma içinde olmasını, savaşta ise süratle organize bir orduya dönüşmesini (ordu-millet anlayışı) sağlamıştır (+20 Kut Puanı).
+                        </div>
+                    </div>
+                `;
+                score += 20;
+                document.getElementById('scoreBadge').innerText = score;
+                playSound('success');
+                nextBtn.disabled = false;
+                nextBtn.classList.add('pulse-subtle');
+            } else {
+                feedbackBox.className = "rounded-xl p-4 sm:p-5 border border-rose-500/50 bg-rose-950/40 text-rose-200 block";
+                feedbackBox.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <span class="text-xl">✖</span>
+                        <div>
+                            <strong class="text-rose-400 block mb-1 font-bold">Sıralamayı Tekrar İnceleyiniz:</strong>
+                            En küçük birim aile (Oguş) ile başlamalı, ailelerin birleşimiyle sülale (Urug), sülalelerin birleşimiyle kabile (Boy), boyların birleşimiyle millet (Budun) ve en üstte devlet (İl) yer almalıdır.
+                        </div>
+                    </div>
+                `;
+                playSound('error');
+            }
+        }
+
+        function nextStage() {
+            playSound('click');
+            currentStageIndex++;
+            renderStage();
+        }
+
+        // SONUÇ VE KAZANIM DEĞERLENDİRME RAPORU
+        function renderFinalReport() {
+            playSound('win');
+            updateHeader();
+            const container = document.getElementById('stageContainer');
+
+            let titleUnvan = "Ulu İl Bilge Kağanı";
+            let titleDesc = "Bozkır töresini, doğanın dilini ve devlet teşkilatını kusursuz şekilde yönettiniz.";
+            let badgeColor = "text-amber-400 border-amber-500/50 bg-amber-500/10";
+
+            if (score >= 130) {
+                titleUnvan = "Ulu İl Bilge Kağanı";
+                titleDesc = "Tüm aşamalarda bozkır yaşamının gereksinimlerini en üst düzeyde uyguladınız.";
+            } else if (score >= 90) {
+                titleUnvan = "Deneyimli Alp";
+                titleDesc = "Bozkırın zorlu şartlarında obanızı başarıyla yönettiniz ve töreye sahip çıktınız.";
+            } else {
+                titleUnvan = "Bozkır Rehberi";
+                titleDesc = "Konargöçer yaşam kültürünün temel dinamiklerini kavrayarak deneyim kazandınız.";
+            }
+
+            let html = `
+                <div class="space-y-6">
+                    <div class="text-center py-2">
+                        <span class="text-4xl sm:text-5xl block mb-2">🏆</span>
+                        <h2 class="text-xl sm:text-2xl md:text-3xl font-extrabold text-amber-400 mb-2">
+                            Tebrikler! Yaylak Simülasyonunu Tamamladınız
+                        </h2>
+                        <p class="text-sm sm:text-base text-steppe-300 max-w-2xl mx-auto">
+                            Konargöçer Türk kültürünün yaylak-kışlak döngüsünü, çadır mimarisini, teşkilatlanma yapısını, zanaat ve töre hukukunu başarıyla analiz ettiniz.
+                        </p>
+                    </div>
+
+                    <!-- Başarı Kartı -->
+                    <div class="bg-steppe-950/80 border border-steppe-700 rounded-2xl p-5 sm:p-6 shadow-xl">
+                        <div class="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-steppe-800">
+                            <div>
+                                <div class="text-xs text-steppe-400 uppercase tracking-wider mb-1">Kazanılan Unvan</div>
+                                <div class="text-lg sm:text-2xl font-black text-amber-400 flex items-center gap-2">
+                                    <span>👑</span> <span>${titleUnvan}</span>
+                                </div>
+                                <p class="text-xs sm:text-sm text-steppe-300 mt-1">${titleDesc}</p>
+                            </div>
+                            <div class="px-5 py-3 rounded-2xl bg-steppe-900 border border-amber-500/40 text-center">
+                                <div class="text-xs text-steppe-400 font-medium">Toplam Kut Puanı</div>
+                                <div class="text-2xl sm:text-3xl font-black text-amber-400">${score}</div>
+                            </div>
+                        </div>
+
+                        <!-- Kazanım Odaklı Öğrenme Özeti -->
+                        <div class="mt-5">
+                            <div class="text-xs font-semibold text-steppe-400 uppercase tracking-wider mb-3">
+                                Öğrenilen Temel Kazanımlar ve Çıkarımlar:
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <div class="bg-steppe-900/70 border border-steppe-800 rounded-xl p-3.5">
+                                    <div class="text-amber-400 text-sm font-bold mb-1 flex items-center gap-1.5">
+                                        <span>🌱</span> <span>Doğa ve Takvim Uyumu</span>
+                                    </div>
+                                    <p class="text-xs text-steppe-300 leading-relaxed">
+                                        Hayvanların beslenmesi ve korunması için bahar işaretleri (çiçek açması, böcek döngüsü) takip edilerek göç zamanı belirlenir.
+                                    </p>
+                                </div>
+
+                                <div class="bg-steppe-900/70 border border-steppe-800 rounded-xl p-3.5">
+                                    <div class="text-amber-400 text-sm font-bold mb-1 flex items-center gap-1.5">
+                                        <span>🏕️</span> <span>Fonksiyonel Çadır (Yurt)</span>
+                                    </div>
+                                    <p class="text-xs text-steppe-300 leading-relaxed">
+                                        Merkezde ocak (korluk), solda savunma silahları, sağda kiler ve başköşede konuk alanı (tör) yer alır.
+                                    </p>
+                                </div>
+
+                                <div class="bg-steppe-900/70 border border-steppe-800 rounded-xl p-3.5">
+                                    <div class="text-amber-400 text-sm font-bold mb-1 flex items-center gap-1.5">
+                                        <span>🛡️</span> <span>Ordu-Millet Teşkilatı</span>
+                                    </div>
+                                    <p class="text-xs text-steppe-300 leading-relaxed">
+                                        Oguş (Aile) ➔ Urug ➔ Boy ➔ Budun ➔ İl (Devlet) piramidi ile toplum barışta ve savaşta anında organize olur.
+                                    </p>
+                                </div>
+
+                                <div class="bg-steppe-900/70 border border-steppe-800 rounded-xl p-3.5">
+                                    <div class="text-amber-400 text-sm font-bold mb-1 flex items-center gap-1.5">
+                                        <span>⚒️</span> <span>Maden ve Ticaret</span>
+                                    </div>
+                                    <p class="text-xs text-steppe-300 leading-relaxed">
+                                        Maden işleme ve keçe üretimi gelişmiştir; hayvansal ve madeni ürünler verilip tarım ürünleri ve ipek alınır.
+                                    </p>
+                                </div>
+
+                                <div class="bg-steppe-900/70 border border-steppe-800 rounded-xl p-3.5">
+                                    <div class="text-amber-400 text-sm font-bold mb-1 flex items-center gap-1.5">
+                                        <span>🍖</span> <span>Dayanıklı Gıda Kültürü</span>
+                                    </div>
+                                    <p class="text-xs text-steppe-300 leading-relaxed">
+                                        Uzun yolculuklara dayanıklı pastırma, kavurma, kurutulmuş et ve kımız beslenmenin temelini oluşturur.
+                                    </p>
+                                </div>
+
+                                <div class="bg-steppe-900/70 border border-steppe-800 rounded-xl p-3.5">
+                                    <div class="text-amber-400 text-sm font-bold mb-1 flex items-center gap-1.5">
+                                        <span>⚖️</span> <span>Dinamik Töre Hukuku</span>
+                                    </div>
+                                    <p class="text-xs text-steppe-300 leading-relaxed">
+                                        Konargöçer yaşamda kalıcı cezaevleri bulunmadığından en çok 10 günlük hapis, tazminat ve sürgün cezaları uygulanır.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yeniden Başlat Butonu -->
+                    <div class="pt-4 flex justify-center">
+                        <button onclick="restartSimulation()" class="px-8 py-3.5 rounded-xl font-extrabold text-base bg-amber-500 text-steppe-950 hover:bg-amber-400 shadow-xl shadow-amber-500/20 transition flex items-center gap-2">
+                            <span>🔄</span>
+                            <span>Etkinliği Yeniden Başlat</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function restartSimulation() {
+            playSound('click');
+            currentStageIndex = 0;
+            score = 100;
+            tentState = {};
+            reorderState = [];
+            activeSelectedItem = null;
+            renderStage();
+        }
+
+        // Başlangıç
+        renderStage();
+    </script>
+</body>
+</html>
